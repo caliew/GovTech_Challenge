@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend Service (SQLite + ReAct Multi-Agents + WebSockets)
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: govtech-analytics-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - db_data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:////app/data/policy_data.db
+      - ENVIRONMENT=production
+      - LLM_PROVIDER=mock
+    restart: unless-stopped
+
+  # Vite React Production Nginx Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: govtech-analytics-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  db_data:

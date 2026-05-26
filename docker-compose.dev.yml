@@ -1,0 +1,19 @@
+# Development override - use with:
+#   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Benefits:
+#   - Backend Python code is live-mounted from host → changes reload instantly (no rebuild)
+#   - Uvicorn runs with --reload so any .py file save triggers automatic restart
+#   - Frontend is NOT included here: run it separately with `npx vite` in /frontend
+
+services:
+  backend:
+    volumes:
+      - db_data:/app/data
+      - ./backend:/app/backend      # Live mount: edit Python files on Windows, reload inside container
+    command: uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    # Exclude frontend from dev compose – run via `npx vite` natively instead
+    profiles:
+      - disabled

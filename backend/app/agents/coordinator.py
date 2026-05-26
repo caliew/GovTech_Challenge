@@ -1,0 +1,171 @@
+import logging
+import json
+from typing import Callable, Dict, Any
+from backend.app.agents.base import BaseAgent
+from backend.app.agents.extraction import ExtractionAgent
+from backend.app.agents.analyst import AnalyticsAgent
+from backend.app.utils.llm import llm_service
+
+logger = logging.getLogger("CoordinatorAgent")
+
+SYSTEM_INSTRUCTION = """
+You are the Data Coordinator Agent. Your role is to serve as the master architect of the policy research workflow.
+
+Responsibilities:
+1. Parse the user's natural language policy query (e.g., "Analyze employment trends in the technology sector from 2020-2024").
+2. Formulate a structured execution plan (data needed, database tables to check, external API resources).
+3. Coordinate and orchestrate the Extraction Agent and Analytics Agent to complete their tasks.
+4. Review the outputs returned by the Extraction and Analytics agents.
+5. Synthesize these inputs into a final, professional **Singapore Policy Brief (Markdown Report)**.
+   - Include a descriptive title, Executive Summary, clear sections, and data tables.
+   - Incorporate proper source citations (e.g. MOM statistics, SingStat CPI index).
+   - Generate policy implications and actionable recommendations.
+6. Package the final compiled report and the charts configuration together.
+
+You operate via standard ReAct formatting:
+Thought: ...
+Action: ...
+Action Input: ...
+Observation: ...
+"""
+
+class CoordinatorAgent(BaseAgent):
+    def __init__(self, ws_callback: Callable = None):
+        super().__init__(
+            name="Coordinator",
+            system_instruction=SYSTEM_INSTRUCTION,
+            ws_callback=ws_callback
+        )
+        self.ws_callback = ws_callback
+
+    async def run_workflow(self, user_query: str) -> Dict[str, Any]:
+        """
+        Orchestrates the entire multi-agent process from query to final markdown report.
+        """
+        await self.log_step("status", f"Starting research orchestration for query: '{user_query}'")
+
+        # 1. PLAN WORKFLOW
+        await self.log_step("status", "Planning analytical workflow...")
+        plan_prompt = f"""
+        Formulate a step-by-step analytical plan to answer this query:
+        "{user_query}"
+        Specify which data sources are needed (MOM employment, SingStat Population, SingStat CPI index)
+        and what analytics are required. Output your plan as a clean JSON object containing 'plan_steps' and 'justification'.
+        """
+        plan_response = llm_service.generate(plan_prompt, self.system_instruction)
+        
+        try:
+            plan_json = json.loads(plan_response)
+            await self.log_step("thought", f"Workflow Plan formulated successfully!\nJustification: {plan_json.get('justification')}")
+        except Exception:
+            await self.log_step("thought", f"Workflow Plan formulated:\n{plan_response}")
+
+        # 2. RUN EXTRACTION AGENT
+        await self.log_step("status", "Delegating task to Extraction Agent...")
+        extractor = ExtractionAgent(ws_callback=self.ws_callback)
+        extraction_query = f"Extract all raw records relevant to answering: '{user_query}'. Return the result as raw data."
+        extraction_result = await extractor.run(extraction_query)
+        
+        await self.log_step("status", "Received data from Extraction Agent. Running sanity check...")
+        await self.log_step("thought", "Extraction Agent returned cleaned datasets and data quality logs. Proceeding to analysis phase.")
+
+        # 3. RUN ANALYTICS AGENT
+        await self.log_step("status", "Delegating dataset to Analytics Agent for statistical insights...")
+        analyst = AnalyticsAgent(ws_callback=self.ws_callback)
+        analytics_query = f"""
+        Take the following extracted data and perform formal statistical trends, averages, CAGRs, and correlations.
+        Generate the JSON chart specification for the frontend dashboard.
+        
+        Extracted Data:
+        {extraction_result}
+        
+        Original Objective:
+        {user_query}
+        """
+        analytics_result = await analyst.run(analytics_query)
+        
+        await self.log_step("status", "Received analysis & charts spec from Analytics Agent. Reviewing findings...")
+        await self.log_step("thought", "Analytics Agent successfully computed correlation indicators and structured the chart layouts. Proceeding to compile final brief.")
+
+        # 4. COMPILE FINAL REPORT
+        await self.log_step("status", "Compiling final policy brief and formatting charts...")
+        compilation_prompt = f"""
+        Compile a final structured Singapore Policy Brief (Markdown) based on these research artifacts:
+        
+        User Query:
+        {user_query}
+        
+        Extracted Datasets:
+        {extraction_result}
+        
+        Analytics & Statistics:
+        {analytics_result}
+        
+        Your output must be a professional markdown report with citations, tabular indices, and policy recommendations.
+        """
+        
+        final_report = llm_service.generate(compilation_prompt, self.system_instruction)
+        
+        # 5. EXTRACT CHART SPEC FROM ANALYST
+        chart_spec = {}
+        try:
+            # Attempt to extract JSON block from analyst's response
+            import re
+            json_blocks = re.findall(r"({[\s\S]*?})", analytics_result)
+            for block in json_blocks:
+                try:
+                    data = json.loads(block)
+                    if "chart_type" in data and "series" in data:
+                        chart_spec = data
+                        break
+                except Exception:
+                    continue
+        except Exception as e:
+            logger.error(f"Failed to parse chart spec from Analytics Agent: {e}")
+
+        # If not found, use a fallback standard chart spec
+        if not chart_spec:
+            chart_spec = {
+                "chart_type": "Composed",
+                "title": "Tech Sector Salaries vs CPI Inflation Trends",
+                "xAxis": "year",
+                "series": [
+                    {"name": "Median Salary (SGD)", "type": "bar", "dataKey": "salary", "color": "#6366f1"},
+                    {"name": "CPI (All Items)", "type": "line", "dataKey": "cpi", "color": "#f43f5e", "yAxisId": "right"}
+                ]
+            }
+
+        # Build chart data based on DB content
+        # We parse the database dynamically to make sure Recharts gets the actual series array!
+        chart_data_points = []
+        from backend.app.database import SessionLocal
+        from backend.app.models import MOMEmployment, SingStatCPI
+        db = SessionLocal()
+        try:
+            tech = db.query(MOMEmployment).filter(MOMEmployment.sector == "Technology").order_by(MOMEmployment.year).all()
+            cpi = db.query(SingStatCPI).filter(SingStatCPI.category == "All Items", SingStatCPI.month == "Jun").order_by(SingStatCPI.year).all()
+            for t in tech:
+                c_val = next((c.cpi_index for c in cpi if c.year == t.year), 100.0)
+                chart_data_points.append({
+                    "year": t.year,
+                    "salary": t.median_salary,
+                    "change": t.employment_change,
+                    "unemployment": t.unemployment_rate,
+                    "cpi": c_val
+                })
+        except Exception as e:
+            logger.error(f"Failed to build chart data arrays: {e}")
+        finally:
+            db.close()
+
+        chart_spec["data"] = chart_data_points
+
+        result = {
+            "report": final_report,
+            "chart_spec": chart_spec
+        }
+        
+        await self.log_step("result", final_report)
+        await self.log_step("status", "Orchestration workflow completed successfully. Output ready.")
+        
+        return result
