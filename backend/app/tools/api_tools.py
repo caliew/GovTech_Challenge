@@ -26,7 +26,7 @@ def fetch_regional_inflation_api(year_str: str) -> str:
     Simulates fetching regional Southeast Asia average inflation rates from a external government API.
     Input should be a string representing the year (e.g. '2022').
     """
-    logger.info(f"API Call: GET /api/v1/inflation/regional?year={year_str}")
+    logger.info(f"🟠 API Call: GET /api/v1/inflation/regional?year={year_str} 🟠")
     try:
         year = int(year_str.strip())
         if year not in [2020, 2021, 2022, 2023, 2024]:
@@ -54,7 +54,7 @@ def fetch_global_tech_index_api(year_str: str) -> str:
     Simulates fetching the Global Tech Talent Index from an external API endpoint.
     Input should be a string representing the year (e.g., '2024').
     """
-    logger.info(f"API Call: GET /api/v1/talent/tech-index?year={year_str}")
+    logger.info(f"🟠 API Call: GET /api/v1/talent/tech-index?year={year_str} 🟠")
     try:
         year = int(year_str.strip())
         if year not in [2020, 2021, 2022, 2023, 2024]:

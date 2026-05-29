@@ -10,7 +10,7 @@ class HallucinationDetector:
     @staticmethod
     def extract_numbers_from_text(text: str) -> list:
         """Helper to find all integer or decimal numbers in a string block."""
-        return [float(n) for n in re.findall(r"\b\d+(?:\.\d+)?\b", text)]
+        return [float(n) for n in re.findall(r"\b\d+(?:\.\d+)?", text)]
 
     @staticmethod
     def parse_markdown_tables(report_markdown: str) -> list:

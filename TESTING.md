@@ -80,16 +80,46 @@ To solve the critical challenge of AI factual hallucinations, we engineered a de
 ## 3. How to Run Automated Tests
 
 ### Option A: Run Tests Natively (Local Host Environment)
-Ensure dependencies inside `backend/requirements.txt` are fully installed.
+Ensure Python dependencies inside `backend/requirements.txt` are fully installed.
 Execute from the project workspace root:
 ```bash
-py -m pytest backend/tests/
+python -m pytest backend/tests/
 ```
+This runs the entire test suite, including:
+1. `test_agents.py`: Base ReAct parser, SQL sandboxing tools, mathematical offloading formulas, and async orchestration integrations.
+2. `test_api.py`: FastAPI health checks, historic request listings, detailed single-request fetches, and real-time analytical WebSockets (mocking expensive LLM API queries with mock events).
+3. `test_data_quality.py`: Resiliency evaluations for malformed markdown tables, numerical parsing, scaling modifiers (e.g., `M`), the 2% rounding tolerance limits, and out-of-bounds anomaly flagging.
 
 ### Option B: Run Tests inside Docker Containers (Recommended)
-This is the most reliable strategy as it bypasses any Windows C++ compilation conflicts.
-With the Docker containers active, run:
+With the Docker containers active, execute from the workspace root:
 ```bash
 docker-compose exec backend pytest backend/tests/
 ```
 You will receive a complete, color-coded execution report demonstrating test coverage!
+
+---
+
+## 4. Performance & Load Benchmarking
+
+To fulfill the requirements of high concurrency and low latency in policy environments, we engineered a benchmarking harness at `backend/tests/benchmark_performance.py`.
+
+### Benchmark Coverage
+* **DB Read Latency:** Performs 100 read cycles against the MOM employment, SingStat population, and CPI index tables, reporting average query speeds.
+* **Validator Throughput:** Parses and performs factual comparisons against standard and edge-case reports 50 times to test regular expression and comparison speed.
+* **Concurrent Load Simulator:** Simulates 15 active client connections running 25 database analytical reads each in parallel (375 total executions) to evaluate thread safety and SQLite thread lock speeds.
+
+### Running the Performance Benchmark
+Execute natively from the project workspace root:
+```bash
+python backend/tests/benchmark_performance.py
+```
+Or execute inside the active Docker backend container:
+```bash
+docker-compose exec backend python backend/tests/benchmark_performance.py
+```
+
+### Verification & Outcome
+Upon completion, the harness:
+1. Prints a beautifully formatted ASCII table of results to stdout showing the **Iterations**, **Average Latency**, **Minimum Latency**, **Maximum Latency**, and **Status**.
+2. Writes the full JSON logs of the run to `backend/tests/benchmark_results.json` for validation and programmatic CI/CD quality gates.
+

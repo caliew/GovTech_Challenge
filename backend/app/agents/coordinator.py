@@ -5,6 +5,7 @@ from backend.app.agents.base import BaseAgent
 from backend.app.agents.extraction import ExtractionAgent
 from backend.app.agents.analyst import AnalyticsAgent
 from backend.app.utils.llm import llm_service
+from backend.app.utils.chart_builder import build_chart_spec
 
 logger = logging.getLogger("CoordinatorAgent")
 
@@ -64,6 +65,7 @@ class CoordinatorAgent(BaseAgent):
         await self.log_step("status", "Delegating task to Extraction Agent...")
         extractor = ExtractionAgent(ws_callback=self.ws_callback)
         extraction_query = f"Extract all raw records relevant to answering: '{user_query}'. Return the result as raw data."
+        logger.info(f"🟡 [{self.name}] EXTRACTOR RUN 🟡")
         extraction_result = await extractor.run(extraction_query)
         
         await self.log_step("status", "Received data from Extraction Agent. Running sanity check...")
@@ -73,8 +75,8 @@ class CoordinatorAgent(BaseAgent):
         await self.log_step("status", "Delegating dataset to Analytics Agent for statistical insights...")
         analyst = AnalyticsAgent(ws_callback=self.ws_callback)
         analytics_query = f"""
-        Take the following extracted data and perform formal statistical trends, averages, CAGRs, and correlations.
-        Generate the JSON chart specification for the frontend dashboard.
+        Take the following extracted data and perform formal statistical analysis:
+        compute CAGRs, correlations, trend highlights, and policy-relevant anomalies.
         
         Extracted Data:
         {extraction_result}
@@ -82,6 +84,7 @@ class CoordinatorAgent(BaseAgent):
         Original Objective:
         {user_query}
         """
+        logger.info(f"🟡 [{self.name}] ANALYST RUN 🟡")
         analytics_result = await analyst.run(analytics_query)
         
         await self.log_step("status", "Received analysis & charts spec from Analytics Agent. Reviewing findings...")
@@ -106,59 +109,10 @@ class CoordinatorAgent(BaseAgent):
         
         final_report = llm_service.generate(compilation_prompt, self.system_instruction)
         
-        # 5. EXTRACT CHART SPEC FROM ANALYST
-        chart_spec = {}
-        try:
-            # Attempt to extract JSON block from analyst's response
-            import re
-            json_blocks = re.findall(r"({[\s\S]*?})", analytics_result)
-            for block in json_blocks:
-                try:
-                    data = json.loads(block)
-                    if "chart_type" in data and "series" in data:
-                        chart_spec = data
-                        break
-                except Exception:
-                    continue
-        except Exception as e:
-            logger.error(f"Failed to parse chart spec from Analytics Agent: {e}")
-
-        # If not found, use a fallback standard chart spec
-        if not chart_spec:
-            chart_spec = {
-                "chart_type": "Composed",
-                "title": "Tech Sector Salaries vs CPI Inflation Trends",
-                "xAxis": "year",
-                "series": [
-                    {"name": "Median Salary (SGD)", "type": "bar", "dataKey": "salary", "color": "#6366f1"},
-                    {"name": "CPI (All Items)", "type": "line", "dataKey": "cpi", "color": "#f43f5e", "yAxisId": "right"}
-                ]
-            }
-
-        # Build chart data based on DB content
-        # We parse the database dynamically to make sure Recharts gets the actual series array!
-        chart_data_points = []
-        from backend.app.database import SessionLocal
-        from backend.app.models import MOMEmployment, SingStatCPI
-        db = SessionLocal()
-        try:
-            tech = db.query(MOMEmployment).filter(MOMEmployment.sector == "Technology").order_by(MOMEmployment.year).all()
-            cpi = db.query(SingStatCPI).filter(SingStatCPI.category == "All Items", SingStatCPI.month == "Jun").order_by(SingStatCPI.year).all()
-            for t in tech:
-                c_val = next((c.cpi_index for c in cpi if c.year == t.year), 100.0)
-                chart_data_points.append({
-                    "year": t.year,
-                    "salary": t.median_salary,
-                    "change": t.employment_change,
-                    "unemployment": t.unemployment_rate,
-                    "cpi": c_val
-                })
-        except Exception as e:
-            logger.error(f"Failed to build chart data arrays: {e}")
-        finally:
-            db.close()
-
-        chart_spec["data"] = chart_data_points
+        # 5. BUILD CHART SPEC — deterministic, zero LLM tokens
+        await self.log_step("status", "Building chart specification from extracted data...")
+        chart_spec = build_chart_spec(extraction_result, user_query)
+        logger.info(f"📊 [{self.name}] Chart spec built: type={chart_spec.get('chart_type')}, points={len(chart_spec.get('data', []))}")
 
         result = {
             "report": final_report,

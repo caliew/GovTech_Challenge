@@ -16,11 +16,10 @@ class BaseAgent:
     def register_tool(self, name: str, func: Callable, description: str):
         """Registers a tool with its function and usage description."""
         self.tools[name] = (func, description)
-        logger.info(f"[{self.name}] Registered tool: {name}")
+        logger.info(f"🔵🟣 [{self.name}] Registered tool: {name} 🟣🔵")
 
     async def log_step(self, step_type: str, content: str):
         """Helper to print logs and push updates to WebSockets."""
-        logger.info(f"[{self.name}] {step_type.upper()}: {content}")
         if self.ws_callback:
             await self.ws_callback({
                 "agent": self.name,
@@ -101,6 +100,7 @@ Reasoning History:
 
     async def run(self, user_query: str, max_iterations: int = 6) -> str:
         """Executes the ReAct loop iteratively."""
+        logger.info(f"🔵🔵 BASE RUN [{self.name}] [{max_iterations}] 🔵🔵")
         await self.log_step("status", f"Activated. Analyzing query: {user_query}")
         history = []
 
@@ -108,12 +108,15 @@ Reasoning History:
             prompt = self._build_react_prompt(user_query, history)
             
             # Generate reasoning using LLM
+            logger.info(f"🔵🔵 BASE RUN [{self.name}] REASONING START [{i+1}/{max_iterations}] 🔵🔵")
             await self.log_step("status", f"Reasoning (Step {i+1}/{max_iterations})...")
             response = llm_service.generate(prompt, self.system_instruction)
             
             # Parse response
             thought, action, action_input = self._parse_react_response(response)
             await self.log_step("thought", thought)
+            logger.info(f"🔵🔵 BASE RUN [{self.name}] THOUGHT <{thought}> 🔵🔵")
+            logger.info(f"🔵🔵 BASE RUN [{self.name}] ACTION <{action}> 🔵🔵")
 
             if action == "FINAL_ANSWER":
                 await self.log_step("result", action_input)
@@ -123,6 +126,7 @@ Reasoning History:
             if not action:
                 # If no tool specified, but not marked Final Answer, ask LLM to wrap up next iteration
                 await self.log_step("status", "No action specified. Transitioning to conclusion.")
+                logger.info(f"🔵🔵 BASE RUN [{self.name}] NO ACTION 🔵🔵")
                 history.append({
                     "thought": thought,
                     "action": "FINAL_ANSWER",
@@ -132,7 +136,7 @@ Reasoning History:
                 continue
 
             # Execute Tool
-            await self.log_step("action", f"Calling tool [{action}] with inputs: {action_input}")
+            await self.log_step("action", f"🔵🔵 Calling tool [{action}] with inputs: {action_input}")
             
             observation = ""
             if action in self.tools:

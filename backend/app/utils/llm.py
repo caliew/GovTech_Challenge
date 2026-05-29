@@ -12,13 +12,16 @@ class LLMService:
         self.provider = settings.LLM_PROVIDER.lower()
         self.openai_client = None
         self.gemini_client = None
+        self.xai_client = None
+        self.groq_keys = []
+        self._groq_key_index = 0  # Round-robin cursor
 
         # Initialize OpenAI
         if settings.OPENAI_API_KEY:
             try:
                 from openai import OpenAI
                 self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-                logger.info("OpenAI LLM client initialized successfully.")
+                logger.info("🤖 OpenAI LLM client initialized successfully. 🤖")
             except Exception as e:
                 logger.error(f"Failed to initialize OpenAI client: {e}")
 
@@ -28,15 +31,35 @@ class LLMService:
                 import google.generativeai as genai
                 genai.configure(api_key=settings.GEMINI_API_KEY)
                 self.gemini_client = genai
-                logger.info("Gemini LLM client initialized successfully.")
+                logger.info("🤖 Gemini LLM client initialized successfully. 🤖")
             except Exception as e:
                 logger.error(f"Failed to initialize Gemini client: {e}")
+
+        # Initialize xAI (Grok) — uses the OpenAI-compatible REST endpoint
+        if settings.XAI_API_KEY:
+            try:
+                from openai import OpenAI
+                self.xai_client = OpenAI(
+                    api_key=settings.XAI_API_KEY,
+                    base_url="https://api.x.ai/v1"
+                )
+                logger.info("🤖 xAI (Grok) LLM client initialized successfully. 🤖")
+            except Exception as e:
+                logger.error(f"Failed to initialize xAI client: {e}")
+
+        # Initialize Groq — multiple keys for rate-limit rotation
+        if settings.GROQ_API_KEYS:
+            raw_keys = [k.strip() for k in settings.GROQ_API_KEYS.split(',') if k.strip()]
+            if raw_keys:
+                self.groq_keys = raw_keys
+                logger.info(f"🤖 Groq client initialized with {len(self.groq_keys)} API key(s). 🤖")
+            else:
+                logger.warning("GROQ_API_KEYS is set but contains no valid keys.")
 
     def generate(self, prompt: str, system_instruction: str = "") -> str:
         """
         Resilient LLM generation that handles fallback and offline mock engine.
         """
-        logger.info(f"Generating completion using provider: {self.provider}")
 
         if self.provider == "mock":
             return self._generate_mock(prompt, system_instruction)
@@ -46,8 +69,11 @@ class LLMService:
                 try:
                     return self._call_openai(prompt, system_instruction)
                 except Exception as e:
-                    logger.error(f"OpenAI call failed: {e}")
-                    raise e
+                    logger.warning(
+                        f"OpenAI call failed (quota or network error): {e}. "
+                        f"Activating Offline Mock Engine for resilience."
+                    )
+                    return self._generate_mock(prompt, system_instruction)
             else:
                 logger.warning("OpenAI client not configured. Falling back to Mock.")
                 return self._generate_mock(prompt, system_instruction)
@@ -57,33 +83,72 @@ class LLMService:
                 try:
                     return self._call_gemini(prompt, system_instruction)
                 except Exception as e:
-                    logger.error(f"Gemini call failed: {e}")
-                    raise e
+                    logger.warning(
+                        f"Gemini call failed (quota or network error): {e}. "
+                        f"Activating Offline Mock Engine for resilience."
+                    )
+                    return self._generate_mock(prompt, system_instruction)
             else:
                 logger.warning("Gemini client not configured. Falling back to Mock.")
                 return self._generate_mock(prompt, system_instruction)
 
+        elif self.provider == "xai":
+            if self.xai_client:
+                try:
+                    return self._call_xai(prompt, system_instruction)
+                except Exception as e:
+                    logger.warning(
+                        f"xAI (Grok) call failed (quota or network error): {e}. "
+                        f"Activating Offline Mock Engine for resilience."
+                    )
+                    return self._generate_mock(prompt, system_instruction)
+            else:
+                logger.warning("xAI client not configured. Falling back to Mock.")
+                return self._generate_mock(prompt, system_instruction)
+
+        elif self.provider == "groq":
+            if self.groq_keys:
+                try:
+                    return self._call_groq(prompt, system_instruction)
+                except Exception as e:
+                    logger.warning(
+                        f"Groq call failed on all keys: "
+                        f"Activating Offline Mock Engine for resilience."
+                    )
+                    return self._generate_mock(prompt, system_instruction)
+            else:
+                logger.warning("Groq keys not configured. Falling back to Mock.")
+                return self._generate_mock(prompt, system_instruction)
+
         elif self.provider == "fallback":
-            # Resilient Fallback mechanism: OpenAI -> Gemini -> Mock
+            # Resilient Fallback chain: Groq -> OpenAI -> xAI (Grok) -> Gemini -> Mock
+            try:
+                if self.groq_keys:
+                    return self._call_groq(prompt, system_instruction)
+            except Exception as e:
+                logger.warning(f"Groq failed: {e}. Trying OpenAI...")
+
             try:
                 if self.openai_client:
-                    logger.info("Attempting primary LLM provider (OpenAI)...")
                     return self._call_openai(prompt, system_instruction)
             except Exception as e:
-                logger.warning(f"Primary provider (OpenAI) failed: {e}. Trying Gemini...")
+                logger.warning(f"OpenAI failed: {e}. Trying xAI (Grok)...")
+
+            try:
+                if self.xai_client:
+                    return self._call_xai(prompt, system_instruction)
+            except Exception as e:
+                logger.warning(f"xAI (Grok) failed: {e}. Trying Gemini...")
 
             try:
                 if self.gemini_client:
-                    logger.info("Attempting fallback LLM provider (Gemini)...")
                     return self._call_gemini(prompt, system_instruction)
             except Exception as e:
-                logger.warning(f"Fallback provider (Gemini) failed: {e}. Using Offline Mock Engine.")
+                logger.warning(f"Gemini failed: {e}. Using Offline Mock Engine.")
 
-            logger.info("All LLM cloud providers failed or unconfigured. Activating Offline Mock Engine.")
             return self._generate_mock(prompt, system_instruction)
 
         else:
-            logger.warning(f"Unknown provider '{self.provider}'. Using Mock.")
             return self._generate_mock(prompt, system_instruction)
 
     def _call_openai(self, prompt: str, system_instruction: str) -> str:
@@ -101,7 +166,7 @@ class LLMService:
 
     def _call_gemini(self, prompt: str, system_instruction: str) -> str:
         model = self.gemini_client.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name="gemini-2.5-flash",
             system_instruction=system_instruction if system_instruction else None
         )
         response = model.generate_content(
@@ -109,6 +174,54 @@ class LLMService:
             generation_config={"temperature": 0.2}
         )
         return response.text.strip()
+
+    def _call_xai(self, prompt: str, system_instruction: str) -> str:
+        """Call xAI Grok via OpenAI-compatible REST API."""
+        messages = []
+        if system_instruction:
+            messages.append({"role": "system", "content": system_instruction})
+        messages.append({"role": "user", "content": prompt})
+
+        response = self.xai_client.chat.completions.create(
+            model="grok-3-mini",
+            messages=messages,
+            temperature=0.2
+        )
+        return response.choices[0].message.content.strip()
+
+    def _call_groq(self, prompt: str, system_instruction: str) -> str:
+        """Call Groq API with automatic round-robin key rotation on failure."""
+        from openai import OpenAI
+
+        messages = []
+        if system_instruction:
+            messages.append({"role": "system", "content": system_instruction})
+        messages.append({"role": "user", "content": prompt})
+
+        num_keys = len(self.groq_keys)
+        for attempt in range(num_keys):
+            key_idx = (self._groq_key_index + attempt) % num_keys
+            api_key = self.groq_keys[key_idx]
+            key_label = f"key[{key_idx + 1}/{num_keys}] ...{api_key[-6:]}"
+            try:
+                logger.info(f"🟡 Groq attempt {attempt + 1}/{num_keys} using {key_label} 🟡")
+                client = OpenAI(
+                    api_key=api_key,
+                    base_url="https://api.groq.com/openai/v1"
+                )
+                response = client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=messages,
+                    temperature=0.2
+                )
+                # Advance the cursor so the next call starts from the next key
+                self._groq_key_index = (key_idx + 1) % num_keys
+                logger.info(f"🟡 Groq call succeeded with {key_label} 🟡")
+                return response.choices[0].message.content.strip()
+            except Exception as e:
+                logger.warning(f"Groq {key_label} failed: {e}")
+
+        raise RuntimeError(f"All {num_keys} Groq API keys exhausted without a successful response.")
 
     def _generate_mock(self, prompt: str, system_instruction: str) -> str:
         """

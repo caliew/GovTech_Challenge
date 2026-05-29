@@ -1,176 +1,143 @@
-# GovTech Tech Challenge: Agentic Policy Data Analytics Platform
+# GovTech Agentic Policy Analytics Platform
 
-## Section 1: Technical Assessment
-
-### Problem Statement
-Policy researchers and analysts need an intelligent system to extract, process, and analyse datasets from multiple government sources (DOS SingStat, MOM Statistics, Data.gov.sg, and internal systems). Manual processes are time-consuming and error-prone. Your challenge is to build a full-stack agentic solution that automates these workflows and generates actionable insights through an intuitive web interface.
-
-### Challenge Overview
-Build an agentic policy data analytics platform that demonstrates your ability to work with autonomous agents, full-stack development, multi-cloud LLM integration, and comprehensive testing. You have complete freedom in your technical approach and implementation choices.
+An intelligent, multi-agent full-stack analytics platform built to orchestrate data extraction, run statistical computations, and compile verified, publication-grade policy briefs on Singapore's socio-economic and demographic datasets.
 
 ---
 
-## Core Requirements
+## 🌟 Key Features
 
-### 1. Multi-Agent System
-Implement at least **3 autonomous agents** that collaborate to accomplish analytical tasks:
-* **Data Coordinator Agent:** Plans research workflows and delegates tasks
-* **Data Extraction Agent:** Extracts data from multiple government sources
-* **Analytics Agent:** Processes data and generates insights
-
-*Demonstrate agent orchestration, coordination, and how agents work together autonomously.*
-
-### 2. Government Data Integration
-* Extract data from **at least 2 different sources**: DOS SingStat, MOM Statistics, Data.gov.sg, or mock internal databases
-* Handle different data formats (CSV, Excel, JSON, APIs)
-* Implement error handling for API failures and missing data
-* Show data quality validation and cleaning processes
-
-### 3. Intelligent Analysis & Insights
-* Perform meaningful statistical analysis (trends, patterns, correlations)
-* Generate policy-relevant insights (e.g., employment trends, sector analysis)
-* Create visualisations to communicate findings
-* Produce structured reports with data source citations
-
-### 4. Full-Stack Web Application
-#### Frontend (TypeScript + Next.js/React)
-* Natural language query input interface
-* Real-time agent activity monitoring showing reasoning steps
-* Interactive data visualisation dashboard
-* Analysis history and export functionality
-
-#### Backend (Python)
-* RESTful API with proper error handling
-* Asynchronous task processing for long-running analyses
-* Database integration for storing datasets and results
-* WebSocket support for real-time updates
-
-### 5. Multi-Cloud LLM Integration
-* Integrate **at least 2 different LLM providers** (AWS Bedrock, OpenAI, GCP Gemini, or Azure OpenAI)
-* Demonstrate fallback mechanisms between providers
-* Use LLMs for query interpretation, insight generation, and report creation
-* Show practical application of LLM capabilities in the agentic workflow
-
-### 6. Agentic Framework
-* Use any agentic framework of your choice (LangGraph, CrewAI, AutoGen, or custom)
-* Implement **ReAct pattern** (Reasoning, Action, Observation)
-* Show agent decision-making and planning capabilities
-* Handle agent failures gracefully
-
-### 7. Comprehensive Testing
-#### Required Tests:
-* Unit tests for agents, tools, and API endpoints
-* Integration tests for multi-agent workflows
-* LLM-specific tests: hallucination detection, accuracy validation, consistency checks
-* Data quality validation tests
-* Performance and load testing
-
-#### Test Documentation:
-* Test plan and methodology
-* Hallucination detection approach
-* Test results and coverage reports
-
-### 8. DevOps & Deployment
-* **Containerisation:** Docker and Docker Compose setup
-* **CI/CD Pipeline:** Automated testing and deployment configuration
-* **Environment management:** and secrets handling
-* **Documentation:** Clear deployment documentation
+* **Asynchronous Multi-Agent Architecture**: Built around a custom event-driven ReAct (Reasoning, Action, Observation) loop, featuring a central **Data Coordinator**, a sandboxed **Data Extractor**, and a mathematical **Analytics Agent** cooperating dynamically.
+* **Deterministic Hallucination Detection**: Features a validation engine that cross-references text and generated tables in policy reports back to the SQL database using a 2% rounding tolerance and logs factual mismatches programmatically.
+* **Real-time Log Streaming**: Visualizes the internal thought processes, tool executions, and findings of the multi-agent system in a real-time terminal window via WebSockets.
+* **Interactive Data Visualizations**: Renders dynamic, responsive charts built in Recharts using JSON coordinate configurations constructed by the Analytics Agent.
+* **Multi-Cloud LLM Resilience Wrapper**: Seamlessly falls back from `OpenAI GPT-4o-mini` to `GCP Gemini 1.5 Flash`, with support for an offline heuristics engine when API keys are not provided.
 
 ---
 
-## Technology Choices
-You are free to choose:
-* **Frontend Framework:** Next.js, React, or similar (We propose **Vite + React + TS**)
-* **Backend Framework:** FastAPI, Flask, or similar (We propose **FastAPI**)
-* **Agentic Framework:** LangGraph, CrewAI, AutoGen, or custom (We propose **Custom ReAct Multi-Agent framework**)
-* **LLM Providers:** Any combination of AWS Bedrock, OpenAI, GCP Gemini, Azure OpenAI (We propose **OpenAI + Gemini + Resilient Fallback / Mock Engine**)
-* **Database:** PostgreSQL, MongoDB, SQLite, or others (We propose **SQLite** with SQLAlchemy)
-* **Data Processing Libraries:** Pandas, NumPy, or alternatives
-* **Visualisation Tools:** Plotly, Chart.js, Matplotlib, or others (We propose **Recharts** in the frontend, clean and interactive)
-* **Testing Frameworks:** pytest, Jest, or alternatives
-* **Development Environment:** Any setup that works for you
+## 📂 Repository Structure
+
+* [CHALLENGE.md](file:///c:/WebPortal/GovTech_Challenge/CHALLENGE.md): The original challenge description and requirements.
+* [ARCHITECTURE.md](file:///c:/WebPortal/GovTech_Challenge/ARCHITECTURE.md): Technical system design, database schemas, agent monologues, and flow charts.
+* [TESTING.md](file:///c:/WebPortal/GovTech_Challenge/TESTING.md): Verification strategy, hallucination validation math, and load benchmarking.
+* [DATA_SOURCES.md](file:///c:/WebPortal/GovTech_Challenge/DATA_SOURCES.md): Government dataset outlines and seeding instructions.
+* [INNOVATION_ASSESSMENT.md](file:///c:/WebPortal/GovTech_Challenge/INNOVATION_ASSESSMENT.md): Detailed responses to structural questions, trade-offs, and scaling plans.
+* [backend/](file:///c:/WebPortal/GovTech_Challenge/backend): FastAPI async REST and WebSocket servers, agents, tools, and DB models.
+* [frontend/](file:///c:/WebPortal/GovTech_Challenge/frontend): React TS application serving the user console dashboard.
 
 ---
 
-## What We're Looking For
+## 🚀 Setup & Launch Instructions
 
-### Development Excellence (50%)
-* Does your full-stack solution work end-to-end?
-* Can agents successfully extract, process, and analyse data?
-* Is the frontend intuitive and responsive?
-* Are the analysis results meaningful and accurate?
-* Is the code well-structured, maintainable, and documented?
-* How effectively have you integrated multiple LLM providers?
+### Prerequisites
+* **Python 3.11+**
+* **Node.js 20+**
+* **Docker & Docker Compose** (Optional, for containerized run)
 
-### Agentic Design (25%)
-* How effectively do you use the agentic framework?
-* How well do agents collaborate and make autonomous decisions?
-* How thoughtfully have you designed the agent architecture?
-* How do you handle errors and edge cases in agent workflows?
+### Option A: Local Host Launch (Natively)
 
-### Testing & Quality Assurance (15%)
-* How comprehensive is your testing suite?
-* How effectively do you detect hallucinations and validate accuracy?
-* How well do you handle data quality issues?
-* What's your test coverage and automation approach?
+#### 1. Setup Backend
+1. Navigate to the project root:
+   ```bash
+   cd c:/WebPortal/GovTech_Challenge
+   ```
+2. Create and activate a Python virtual environment:
+   ```bash
+   python -m venv backend/venv
+   .\backend\venv\Scripts\Activate.ps1
+   ```
+3. Install Python dependencies:
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+4. Configure environment variables (copy `.env.example` to `.env` and fill in API keys if available):
+   ```bash
+   copy .env.example .env
+   ```
+5. Initialize and seed the SQLite database:
+   ```bash
+   python -c "from backend.app.database import init_db; init_db()"
+   ```
+6. Start the FastAPI development server:
+   ```bash
+   uvicorn backend.app.main:app --reload
+   ```
+   *(Running at `http://localhost:8000`)*
 
-### DevOps & Documentation (10%)
-* How well is your application containerised and deployable?
-* How clear and complete is your documentation?
-* How professional is your CI/CD setup?
-
-#### Bonus Considerations:
-* Innovative approaches to agent design or multi-agent collaboration
-* Advanced analytics or predictive capabilities
-* Exceptional code quality and architecture
-* Creative solutions to data challenges
-* Streaming responses and real-time updates
-* Vector database integration for RAG capabilities
-* Performance optimisation and cost tracking
-
----
-
-## Submission Requirements
-
-1. **GitHub Repository**
-   Include:
-   * **Source Code:** Well-structured frontend and backend code
-   * **Docker Setup:** Dockerfile and docker-compose.yml
-   * **Tests:** Comprehensive test suite with documentation
-   * **README.md** with:
-     * Project overview and architecture
-     * Setup instructions (step-by-step)
-     * How to run the application locally
-     * How to run tests
-     * Sample queries to demonstrate capabilities
-     * Technology choices and justifications
-   * **ARCHITECTURE.md:** System design, agent workflows, database schema, design decisions
-   * **TESTING.md:** Testing strategy, hallucination detection methodology, test results
-   * **DATA_SOURCES.md:** Government data sources used, API documentation, mock data approach
-2. **Live Demonstration (20 minutes)**
-   Show us:
-   * **End-to-End Workflow:** Complete research query from input to insights
-     * *Example:* "Analyse employment trends in the technology sector from 2020-2024"
-     * Show agents extracting data from multiple sources
-     * Display data processing and quality checks
-     * Present analytical insights and visualisations
-   * **Architecture Walkthrough:** Explain your agent design and technical decisions
-   * **Challenges & Solutions:** Discuss technical challenges and how you solved them
-   * **Q&A:** Answer questions about implementation
+#### 2. Setup Frontend
+1. Open a new terminal and navigate to the frontend directory:
+   ```bash
+   cd c:/WebPortal/GovTech_Challenge/frontend
+   ```
+2. Install Node packages:
+   ```bash
+   npm install
+   ```
+3. Start the Vite React development server:
+   ```bash
+   npm run dev
+   ```
+   *(Accessible at `http://localhost:5173`)*
 
 ---
 
-## Section 2: Innovation Assessment
+### Option B: Docker Containers (Recommended)
 
-How would you evolve your agentic policy data analytics platform to better serve policy researchers in secure government environments? What innovative features or improvements would you add, and why?
+To build and spin up the complete full-stack environment instantly inside Docker containers:
+1. Navigate to the project root:
+   ```bash
+   cd c:/WebPortal/GovTech_Challenge
+   ```
+2. Run docker compose build and run:
+   ```bash
+   docker-compose up --build
+   ```
+3. Open `http://localhost:80` (production Nginx proxying request pipelines) or `http://localhost:5173` (development frontend mapping) in your browser.
 
-Consider aspects such as:
-* Agent intelligence and adaptability
-* Handling real-world data challenges (incomplete data, changing APIs, data privacy)
-* User trust and transparency in AI-generated insights
-* Scalability and performance for large datasets
-* Collaboration and knowledge sharing across research teams
-* Security and compliance in government contexts
-* Multi-cloud resilience and cost optimisation
+---
 
-*Your response should be approximately 1-2 pages in length, include concrete examples from your implementation, and propose specific, actionable improvements.*
+## 🧪 Running the Test Suites
+
+### Backend Unit Tests & Coverage
+Our backend includes `pytest-cov` verification which generates coverage HTML and JSON reports, enforcing a strict minimum threshold of `70%`.
+* **Run natively (with coverage)**:
+  ```powershell
+  .\backend\venv\Scripts\pytest
+  ```
+* **Run inside Docker**:
+  ```bash
+  docker-compose exec backend pytest
+  ```
+
+### Frontend Unit Tests & Coverage
+Our frontend uses `Vitest` and `JSDOM` to verify UI responsiveness, settings manipulation, and WebSocket pipelines.
+* **Run natively (with coverage)**:
+  ```bash
+  cd frontend
+  npm run coverage
+  ```
+
+---
+
+## 📊 Sample Queries to Try
+
+You can type these queries into the research input box or click their corresponding quick-start template buttons on the dashboard:
+1. **Employment & Inflation Brief**:
+   > *"Analyze employment trends in the technology sector from 2020-2024 and compare with inflation."*
+2. **Demographics & Population Balance**:
+   > *"Evaluate resident population median age trends and demographic dependency ratios (2020-2024)."*
+3. **Tourism Sector Recovery**:
+   > *"Investigate tourism sector recovery post-pandemic and check wage growth indices compared to CPI."*
+
+---
+
+## 🛠️ Technology Justification
+
+| Layer | Choice | Justification |
+|---|---|---|
+| **Backend Framework** | **FastAPI** | Extremely fast async processing capabilities. Ideal for streaming WebSocket monologue frames and concurrent request handling. |
+| **Database** | **SQLite + SQLAlchemy** | Highly responsive local, file-based relational database. Avoids heavy network connections during live demos while maintaining SQL relational compliance. |
+| **Agentic Framework** | **Custom ReAct Loop** | Avoids heavy agent frameworks (e.g. CrewAI, LangGraph) which trigger dependency compile issues on Windows. ReAct loop is custom-built with pure Python generators to achieve direct frame-by-frame streaming. |
+| **Math Execution** | **Python Offloader** | Keeps agents from attempting arithmetic inside LLM prompt logs. Programmatic python scripts compute CAGR and Pearson correlation to guarantee 100% calculation accuracy. |
+| **Frontend Framework** | **React + TS + Vite** | Instant module updates, strong type safety, and fast compile speeds. Supports dynamic rendering of WebSocket streams. |
+| **Charts** | **Recharts** | Interactive, svg-responsive canvas library that seamlessly binds to JSON data configurations. |
+| **UI Aesthetics** | **Glassmorphism Tailwind** | Premium neon-tinted dark-mode styling giving the dashboard an intuitive, futuristic console feeling. |

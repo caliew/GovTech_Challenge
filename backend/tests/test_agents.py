@@ -11,6 +11,9 @@ from backend.app.utils.validator import HallucinationDetector
 from backend.app.agents.base import BaseAgent
 from backend.app.agents.coordinator import CoordinatorAgent
 
+# Force LLM provider to mock for isolated, hermetic, and fast offline testing
+llm_service.provider = "mock"
+
 # Setup database fixtures for testing
 @pytest.fixture(scope="module")
 def db_session():

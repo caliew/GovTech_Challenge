@@ -45,7 +45,12 @@ app.add_middleware(
 @app.get("/api/health")
 def health_check():
     """Simple API health check endpoint."""
-    return {"status": "healthy", "database": "connected", "environment": settings.ENVIRONMENT}
+    return {
+        "status": "healthy",
+        "database": "connected",
+        "environment": settings.ENVIRONMENT,
+        "llm_provider": settings.LLM_PROVIDER
+    }
 
 @app.get("/api/requests")
 def list_analysis_requests(db: Session = Depends(get_db)):
@@ -96,7 +101,7 @@ async def websocket_analysis_endpoint(websocket: WebSocket):
     Pushes intermediate agent monologues, tool calls, observations, and streams the final report.
     """
     await websocket.accept()
-    logger.info("WebSocket connection established.")
+    logger.info("🟢 WEBSOCKET CONNECTION ESTABLISHED 🟢")
 
     try:
         # 1. Listen for user query
@@ -118,7 +123,9 @@ async def websocket_analysis_endpoint(websocket: WebSocket):
         request_id = req.id
         db.close()
 
-        logger.info(f"Started analysis task '{request_id}' for query: '{query}'")
+        # 🔴🟢🟠🟡🟣
+        logger.info(f"🟢 STARTED ANALYSIS TASK '{request_id}'")
+        logger.info(f"🟢 QUERY : '{query}'")
 
         # 3. Define Callback to stream agent thoughts to both Database & WebSocket
         async def ws_callback(step: dict):
@@ -145,6 +152,7 @@ async def websocket_analysis_endpoint(websocket: WebSocket):
                 db_session.close()
 
         # 4. Instantiate and Run Multi-Agent Orchestrator
+        logger.info(f"🟢 INSTANTIATE AND RUN MULTI-AGENT ORCHESTRATOR 🟢")
         coordinator = CoordinatorAgent(ws_callback=ws_callback)
         
         try:
@@ -173,7 +181,7 @@ async def websocket_analysis_endpoint(websocket: WebSocket):
                 "chart_spec": workflow_result["chart_spec"]
             }))
             
-            logger.info(f"Successfully completed analysis request '{request_id}'")
+            logger.info(f"🟢 SUCCESSFULY COMPLETED ANALYSIS REQUEST '{request_id}' 🟢")
 
         except Exception as err:
             logger.error(f"Error during agentic workflow: {err}")
@@ -192,9 +200,9 @@ async def websocket_analysis_endpoint(websocket: WebSocket):
             }))
 
     except WebSocketDisconnect:
-        logger.info("WebSocket disconnected by client.")
+        logger.info("🟢 WEBSOCKET DISCONNECTED BY CLIENT 🟢")
     except Exception as e:
-        logger.error(f"WebSocket error: {e}")
+        logger.error(f"🟢 WEBSOCKET ERROR : {e} 🟢")
     finally:
         try:
             await websocket.close()

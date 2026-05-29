@@ -1,0 +1,25 @@
+{
+  "timestamp": 1779843430.6777897,
+  "database_read_benchmark": {
+    "metric": "DB Table Lookups (Read)",
+    "count": 100,
+    "avg": 0.0009501980035565794,
+    "min": 0.0006705999840050936,
+    "max": 0.01469900005031377
+  },
+  "hallucination_validator_benchmark": {
+    "metric": "Hallucination Validation",
+    "count": 50,
+    "avg": 0.0006589879910461605,
+    "min": 0.00041259999852627516,
+    "max": 0.0012128000380471349
+  },
+  "concurrency_simulation": {
+    "metric": "Concurrent Load (15 Clients)",
+    "count": 375,
+    "avg": 0.013310072533786297,
+    "min": 0.00031100003980100155,
+    "max": 0.32147550000809133,
+    "total_elapsed": 0.35641130001749843
+  }
+}

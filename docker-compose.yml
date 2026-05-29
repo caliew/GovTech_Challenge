@@ -11,10 +11,11 @@ services:
       - "8000:8000"
     volumes:
       - db_data:/app/data
+    env_file:
+      - .env                           # Load LLM_PROVIDER, API keys from host
     environment:
-      - DATABASE_URL=sqlite:////app/data/policy_data.db
+      - DATABASE_URL=sqlite:////app/data/policy_data.db   # Override DB path for Docker volume
       - ENVIRONMENT=production
-      - LLM_PROVIDER=mock
     restart: unless-stopped
 
   # Vite React Production Nginx Frontend Service
