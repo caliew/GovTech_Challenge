@@ -251,32 +251,32 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-[#070b13] font-sans">
+    <div className="app-container">
 
       {/* Sidebar - Quick Brand and Server Stats */}
-      <div className="w-64 border-r border-slate-900 bg-[#090e17] flex flex-col justify-between">
+      <div className="sidebar">
         <div>
           {/* Logo Header */}
-          <div className="p-5 border-b border-slate-900 flex items-center gap-3">
-            <div className="bg-indigo-600/10 p-2.5 rounded-lg border border-indigo-500/30">
-              <Shield className="h-5.5 w-5.5 text-indigo-400" />
+          <div className="sidebar-brand">
+            <div className="brand-icon-wrapper">
+              <Shield className="brand-icon" />
             </div>
-            <div>
-              <h1 className="font-bold text-base tracking-tight text-white">GovTech Agentic</h1>
-              <p className="text-xs text-slate-400 font-medium">Policy Analytics Engine</p>
+            <div className="brand-info">
+              <h1 className="brand-title">GovTech Agentic</h1>
+              <p className="brand-subtitle">Policy Analytics Engine</p>
             </div>
           </div>
 
           {/* Configuration and Environment Stats */}
-          <div className="p-4 space-y-4">
-            <div className="bg-slate-900/50 p-3.5 rounded-lg border border-slate-800/40">
+          <div className="sidebar-menu">
+            <div className="config-section">
               <div className="flex items-center justify-between mb-2.5">
                 <span className="text-xs text-slate-300 font-semibold tracking-wider uppercase">Backend Status</span>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${apiHealth === 'healthy'
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  ? 'status-badge-healthy'
                   : apiHealth === 'connecting'
-                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
-                    : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                    ? 'status-badge-connecting'
+                    : 'status-badge-unhealthy'
                   }`}>
                   {apiHealth === 'healthy' ? 'Online' : apiHealth === 'connecting' ? 'Connecting' : 'Offline'}
                 </span>
@@ -290,7 +290,7 @@ export default function App() {
                     type="text"
                     value={backendUrl}
                     onChange={(e) => setBackendUrl(e.target.value)}
-                    className="w-full text-xs bg-slate-950 text-slate-200 border border-slate-800 rounded px-2.5 py-1.5 focus:outline-none focus:border-slate-700 font-mono"
+                    className="config-input"
                   />
                 </div>
                 <div>
@@ -300,14 +300,14 @@ export default function App() {
                     type="text"
                     value={wsUrl}
                     onChange={(e) => setWsUrl(e.target.value)}
-                    className="w-full text-xs bg-slate-950 text-slate-200 border border-slate-800 rounded px-2.5 py-1.5 focus:outline-none focus:border-slate-700 font-mono"
+                    className="config-input"
                   />
                 </div>
               </div>
             </div>
 
             {/* Orchestrator Insights */}
-            <div className="bg-[#0f172a]/30 p-3.5 rounded-lg border border-indigo-500/5">
+            <div className="architecture-section">
               <span className="text-xs text-slate-300 font-semibold tracking-wider uppercase block mb-1.5">Active Architecture</span>
               <div className="space-y-2 mt-2">
                 <div className="flex items-center justify-between text-xs">
@@ -328,7 +328,7 @@ export default function App() {
             {/* Quick Action Drawer Toggle */}
             <button
               onClick={() => { setShowHistory(true); fetchHealthAndHistory(); }}
-              className="w-full bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-slate-700 rounded-lg p-2.5 flex items-center justify-center gap-2 text-sm transition duration-200 font-medium"
+              className="btn-secondary"
             >
               <History className="h-4.5 w-4.5" />
               View Query History ({history.length})
@@ -343,22 +343,22 @@ export default function App() {
       </div>
 
       {/* Main Core Dashboard Layout */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="main-viewport">
 
         {/* Top Header stats */}
-        <div className="h-14 border-b border-slate-900 bg-[#090e17] px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-400 font-medium">Active Task State:</span>
-            <span className="bg-slate-950 text-indigo-400 border border-slate-850 px-2.5 py-1 rounded flex items-center gap-2 font-mono text-xs">
-              <Activity className="h-4 w-4 animate-pulse text-indigo-400" />
+        <div className="top-header">
+          <div className="status-display">
+            <span className="status-label">Active Task State:</span>
+            <span className="status-value-pill">
+              <Activity className="status-pulse-icon animate-pulse" />
               {currentStatus}
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="header-actions">
             <button
               onClick={fetchHealthAndHistory}
-              className="p-1.5 hover:bg-slate-900 rounded border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200 transition"
+              className="btn-icon"
               title="Refresh Health Stats"
             >
               <RefreshCw className="h-4 w-4" />
@@ -367,16 +367,16 @@ export default function App() {
         </div>
 
         {/* Dashboard Split Sections */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="dashboard-split">
 
           {/* Left Block: Query Inputs & Real-time Console */}
-          <div className="w-1/2 flex flex-col p-6 gap-6 border-r border-slate-900 overflow-y-auto">
+          <div className="panel-left">
 
             {/* Natural Language Query Panel */}
-            <div className="glass-panel rounded-xl p-5 shadow-lg border border-slate-800/80">
-              <div className="flex items-center gap-2 mb-3.5">
-                <Sparkles className="h-4.5 w-4.5 text-indigo-400" />
-                <h2 className="text-base font-semibold text-white">Policy Research Query</h2>
+            <div className="query-panel">
+              <div className="query-header">
+                <Sparkles className="query-header-icon" />
+                <div className="query-header-title">Policy Research Query</div>
               </div>
 
               <form onSubmit={handleQuerySubmit} className="relative">
@@ -384,33 +384,30 @@ export default function App() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="e.g. Analyze employment trends in the tech sector from 2020 to 2024 and compare with domestic CPI inflation."
-                  className="w-full h-28 bg-slate-950 text-slate-200 border border-slate-800 rounded-lg p-3.5 pr-12 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm font-sans resize-none leading-relaxed"
+                  className="query-textarea"
                   disabled={isAnalyzing}
                 />
                 <button
                   type="submit"
-                  className={`absolute right-3.5 bottom-3.5 p-2 rounded-md transition duration-200 ${isAnalyzing
-                    ? 'bg-slate-900 text-slate-600 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                    }`}
+                  className={`btn-submit ${isAnalyzing ? 'disabled' : ''}`}
                   disabled={isAnalyzing}
                 >
-                  <Send className="h-4.5 w-4.5" />
+                  <Send className="btn-submit-icon" />
                 </button>
               </form>
 
               {/* Template Prompts */}
-              <div className="mt-5">
-                <span className="text-xs text-slate-400 font-semibold tracking-wider uppercase block mb-2.5">Example Analytics Prompts</span>
-                <div className="flex flex-col gap-2">
+              <div className="template-container">
+                <span className="template-title">Example Analytics Prompts</span>
+                <div className="template-list">
                   {templates.map((t, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleQuerySubmit(undefined, t)}
-                      className="text-left text-xs bg-slate-900/60 hover:bg-slate-800/60 border border-slate-900 hover:border-slate-800 text-slate-300 hover:text-slate-100 rounded p-2.5 transition duration-200 truncate flex items-center gap-2 font-medium"
+                      className="btn-template"
                       disabled={isAnalyzing}
                     >
-                      <ChevronRight className="h-4 w-4 text-indigo-500/70" />
+                      <ChevronRight className="btn-template-icon" />
                       {t}
                     </button>
                   ))}
@@ -419,63 +416,63 @@ export default function App() {
             </div>
 
             {/* Agent monologue real-time WebSocket console */}
-            <div className="flex-1 glass-panel rounded-xl flex flex-col border border-slate-800/80 overflow-hidden shadow-lg">
+            <div className="terminal-panel">
               {/* Terminal Header */}
-              <div className="bg-slate-950/80 px-4 py-3 border-b border-slate-900 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Terminal className="h-4.5 w-4.5 text-indigo-400" />
-                  <span className="text-sm font-semibold text-white tracking-wide font-mono">Agent Collaborative Log</span>
+              <div className="terminal-header">
+                <div className="terminal-title-container">
+                  <Terminal className="terminal-header-icon" />
+                  <span className="terminal-title">Agent Collaborative Log</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className={`h-2.5 w-2.5 rounded-full ${isAnalyzing ? 'bg-indigo-500 animate-pulse' : 'bg-slate-700'}`} />
-                  <span className="text-[10px] text-slate-400 font-mono font-medium tracking-wider uppercase">
+                <div className="terminal-status-container">
+                  <div className={`terminal-status-dot ${isAnalyzing ? 'active' : 'idle'}`} />
+                  <span className="terminal-status-label">
                     {isAnalyzing ? 'Running ReAct Loop' : 'Idle'}
                   </span>
                 </div>
               </div>
 
               {/* Terminal Body */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-4 font-mono text-sm bg-slate-950/50">
+              <div className="terminal-body">
                 {agentSteps.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-40">
-                    <Database className="h-10 w-10 text-slate-600 mb-2.5" />
-                    <p className="text-xs text-slate-500 font-medium">Submit a policy query to view the agentic thought workflow steps.</p>
+                  <div className="terminal-empty">
+                    <Database className="terminal-empty-icon" />
+                    <p className="terminal-empty-text">Submit a policy query to view the agentic thought workflow steps.</p>
                   </div>
                 ) : (
                   agentSteps.map((step, idx) => {
                     // Decide badge and styling based on agent
-                    let badgeColor = 'bg-slate-800 text-slate-400 border-slate-700';
-                    if (step.agent === 'Coordinator') badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-                    else if (step.agent === 'Extractor') badgeColor = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-                    else if (step.agent === 'Analyst') badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-                    else if (step.agent === 'System') badgeColor = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+                    let badgeColorClass = 'badge-default';
+                    if (step.agent === 'Coordinator') badgeColorClass = 'badge-coordinator';
+                    else if (step.agent === 'Extractor') badgeColorClass = 'badge-extractor';
+                    else if (step.agent === 'Analyst') badgeColorClass = 'badge-analyst';
+                    else if (step.agent === 'System') badgeColorClass = 'badge-system';
 
                     // Format step types nicely
                     return (
-                      <div key={idx} className="border border-slate-900/60 bg-slate-950/40 p-3 rounded-lg space-y-1.5 terminal-glow">
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded border ${badgeColor}`}>
+                      <div key={idx} className="terminal-step">
+                        <div className="step-header">
+                          <span className={`step-badge ${badgeColorClass}`}>
                             [{step.agent}]
                           </span>
-                          <span className="text-xs text-slate-400 font-semibold tracking-wider uppercase">
+                          <span className="step-type">
                             {step.type}
                           </span>
                         </div>
 
                         {/* Custom content display based on step type */}
-                        <div className="pl-2 border-l-2 border-slate-800 text-slate-200 font-sans leading-relaxed text-sm">
+                        <div className="step-body">
                           {step.type === 'thought' ? (
-                            <p className="italic text-slate-400 leading-relaxed">"{step.content}"</p>
+                            <p className="thought-text">"{step.content}"</p>
                           ) : step.type === 'action' ? (
-                            <div className="bg-slate-950 p-2.5 rounded border border-slate-800 text-indigo-400 font-mono text-xs whitespace-pre-wrap leading-relaxed">
+                            <div className="action-box">
                               {step.content}
                             </div>
                           ) : step.type === 'observation' ? (
-                            <div className="bg-slate-950/60 p-2.5 rounded text-slate-400 font-mono text-xs max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                            <div className="observation-box">
                               {step.content}
                             </div>
                           ) : (
-                            <p className="leading-relaxed">{step.content}</p>
+                            <p className="generic-text">{step.content}</p>
                           )}
                         </div>
                       </div>
@@ -488,27 +485,21 @@ export default function App() {
           </div>
 
           {/* Right Block: Charts and Formatted Markdown Reports */}
-          <div className="w-1/2 flex flex-col p-6 overflow-y-auto bg-[#070b13]/60">
+          <div className="panel-right">
 
             {/* Header Tabs */}
             <div className="flex items-center justify-between mb-4 border-b border-slate-900 pb-2">
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setActiveTab('report')}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition ${activeTab === 'report'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'hover:bg-slate-900 text-slate-400 hover:text-slate-200'
-                    }`}
+                  className={`tab-btn ${activeTab === 'report' ? 'active' : ''}`}
                 >
                   <FileText className="h-4 w-4" />
                   Policy Brief
                 </button>
                 <button
                   onClick={() => setActiveTab('charts')}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition ${activeTab === 'charts'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'hover:bg-slate-900 text-slate-400 hover:text-slate-200'
-                    }`}
+                  className={`tab-btn ${activeTab === 'charts' ? 'active' : ''}`}
                 >
                   <BarChart3 className="h-4 w-4" />
                   Interactive Charts
@@ -519,7 +510,7 @@ export default function App() {
               {report && (
                 <button
                   onClick={handleExportMarkdown}
-                  className="bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-slate-700 px-3.5 py-2 rounded-lg text-sm flex items-center gap-2 transition duration-200 font-medium"
+                  className="btn-download"
                 >
                   <Download className="h-4 w-4" />
                   Download Brief (.md)
@@ -683,7 +674,7 @@ export default function App() {
           <div className="w-96 bg-[#090e17] border-l border-slate-900 h-full flex flex-col shadow-2xl p-6 relative">
             <button
               onClick={() => setShowHistory(false)}
-              className="absolute top-4 left-4 text-slate-300 hover:text-slate-100 text-sm font-semibold hover:bg-slate-950 p-1.5 px-3 rounded border border-slate-800"
+              className="btn-drawer-close"
             >
               Close Drawer
             </button>
@@ -702,10 +693,7 @@ export default function App() {
                     <button
                       key={req.id}
                       onClick={() => loadHistoricalRequest(req.id)}
-                      className={`w-full text-left bg-slate-950/40 hover:bg-slate-900 border text-sm p-3.5 rounded-lg transition duration-200 flex flex-col gap-2 ${selectedHistoryId === req.id
-                        ? 'border-indigo-500/50 bg-[#1e293b]/10'
-                        : 'border-slate-800/60 hover:border-slate-800'
-                        }`}
+                      className={`btn-history ${selectedHistoryId === req.id ? 'active' : ''}`}
                     >
                       <p className="font-semibold text-slate-200 truncate">{req.query}</p>
                       <div className="flex items-center justify-between text-[11px] text-slate-500">

@@ -16,7 +16,6 @@ class BaseAgent:
     def register_tool(self, name: str, func: Callable, description: str):
         """Registers a tool with its function and usage description."""
         self.tools[name] = (func, description)
-        logger.info(f"🔵🟣 [{self.name}] Registered tool: {name} 🟣🔵")
 
     async def log_step(self, step_type: str, content: str):
         """Helper to print logs and push updates to WebSockets."""
@@ -100,7 +99,6 @@ Reasoning History:
 
     async def run(self, user_query: str, max_iterations: int = 6) -> str:
         """Executes the ReAct loop iteratively."""
-        logger.info(f"🔵🔵 BASE RUN [{self.name}] [{max_iterations}] 🔵🔵")
         await self.log_step("status", f"Activated. Analyzing query: {user_query}")
         history = []
 
@@ -115,8 +113,7 @@ Reasoning History:
             # Parse response
             thought, action, action_input = self._parse_react_response(response)
             await self.log_step("thought", thought)
-            logger.info(f"🔵🔵 BASE RUN [{self.name}] THOUGHT <{thought}> 🔵🔵")
-            logger.info(f"🔵🔵 BASE RUN [{self.name}] ACTION <{action}> 🔵🔵")
+            logger.info(f"🔵🔵 BASE RUN [{self.name}] THOUGHT <{action}><{thought}> 🔵🔵")
 
             if action == "FINAL_ANSWER":
                 await self.log_step("result", action_input)

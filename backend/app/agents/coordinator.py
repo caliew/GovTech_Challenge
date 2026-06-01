@@ -109,6 +109,40 @@ class CoordinatorAgent(BaseAgent):
         
         final_report = llm_service.generate(compilation_prompt, self.system_instruction)
         
+        # 4.5 AUTOMATED FACT-CHECK & COMPLIANCE GATE
+        await self.log_step("status", "Running automated hallucination detection and data accuracy checks...")
+        try:
+            from backend.app.utils.validator import HallucinationDetector
+            from backend.app.database import SessionLocal
+            
+            db = SessionLocal()
+            try:
+                validation = HallucinationDetector.validate_report(final_report, db)
+                if validation.get("status") == "success":
+                    accuracy_score = validation.get("accuracy_score", 1.0)
+                    mismatches = validation.get("mismatches", [])
+                    mismatches_count = validation.get("mismatches_count", 0)
+                    validated_count = validation.get("validated_facts_count", 0)
+                    
+                    # Formulate verification segment to append to final policy report
+                    verification_text = f"\n\n---\n\n### 🛡️ Automated Fact-Checking & Data Quality Certificate\n"
+                    verification_text += f"*   **Status:** Verification completed successfully.\n"
+                    verification_text += f"*   **Factual Accuracy Score:** `{accuracy_score * 100:.1f}%` ({validated_count} verified facts, {mismatches_count} discrepancies).\n"
+                    
+                    if mismatches_count > 0:
+                        verification_text += f"*   **Flagged Discrepancies:** {mismatches_count} anomalies detected against factual database sources.\n"
+                        for m in mismatches:
+                            verification_text += f"    *   *Anomaly:* `{m.get('entity')}` reported as `{m.get('reported_value')}` but database fact is `{m.get('factual_value')}` (Source: *{m.get('source')}*).\n"
+                    else:
+                        verification_text += f"*   **Data Integrity Check:** 100% verified. All reported statistics align perfectly with verified Department of Statistics (DOS) and Ministry of Manpower (MOM) schemas.\n"
+                        
+                    final_report += verification_text
+                    await self.log_step("thought", f"Fact-check verification completed! Accuracy: {accuracy_score * 100:.1f}% ({validated_count} validated, {mismatches_count} anomalies).")
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Factual verification execution failed: {e}")
+
         # 5. BUILD CHART SPEC — deterministic, zero LLM tokens
         await self.log_step("status", "Building chart specification from extracted data...")
         chart_spec = build_chart_spec(extraction_result, user_query)

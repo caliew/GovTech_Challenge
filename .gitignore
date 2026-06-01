@@ -6,6 +6,7 @@ backend/*.pyc
 backend/*.pyo
 backend/*.pyd
 backend/.cache/
+*.pyc
 
 # Node / Frontend
 frontend/node_modules/

@@ -204,7 +204,6 @@ class LLMService:
             api_key = self.groq_keys[key_idx]
             key_label = f"key[{key_idx + 1}/{num_keys}] ...{api_key[-6:]}"
             try:
-                logger.info(f"🟡 Groq attempt {attempt + 1}/{num_keys} using {key_label} 🟡")
                 client = OpenAI(
                     api_key=api_key,
                     base_url="https://api.groq.com/openai/v1"

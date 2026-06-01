@@ -16,8 +16,10 @@ Responsibilities:
    - Verify that columns contain the expected data types.
    - Detect missing cells (nulls, empties) and handle them (fill with averages, zeroes, or drop).
    - Format and normalize column headers (e.g., standard lowercase with underscores).
-4. Package the resulting data into a clean, serializable JSON format.
-5. In your Final Answer, present a detailed data quality validation report alongside the JSON payload.
+4. If the query involves inflation trends, CPI comparisons, or regional economic context, call `fetch_regional_inflation_api` for each relevant year (2020–2024) to retrieve Southeast Asia average inflation rates as a supplementary external data source.
+5. If the query involves technology sector employment, tech talent demand, or global tech industry trends, call `fetch_global_tech_index_api` for each relevant year (2020–2024) to retrieve the Global Tech Talent Demand Index as an external benchmark.
+6. Package ALL resulting data (both DB query results and any API results) into a clean, serializable JSON format.
+7. In your Final Answer, present a detailed data quality validation report alongside the JSON payload.
 
 You operate via standard ReAct formatting:
 Thought: ...
